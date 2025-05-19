@@ -10,7 +10,8 @@ import {
   Stack, 
   LinearProgress,
   IconButton,
-  Button
+  Button,
+  CircularProgress
 } from '@mui/material';
 import { styled } from '@mui/system';
 import { Line } from 'react-chartjs-2';
@@ -35,6 +36,9 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import AddInvestmentModal from '../components/AddInvestmentModal';
+import AddWithdrawalModal from '../components/AddWithdrawalModal';
+import AddGoalModal from '../components/AddGoalModal';
+import GoalDetailsModal from '../components/GoalDetailsModal';
 
 // Register Chart.js components
 ChartJS.register(
@@ -122,6 +126,70 @@ const topInvestments = [
   { name: 'Bitcoin', symbol: 'BTC', price: 59325.45, change: 5.32, icon: '₿' }
 ];
 
+// Mock data for financial goals
+const financialGoalsData = [
+  {
+    name: 'Home Down Payment',
+    value: 800000,
+    target: 2000000,
+    progress: 40,
+    color: '#FF9800',
+    icon: '🏠',
+    priority: 'High',
+    priorityColor: '#FF5757',
+    date: 'Aug 15, 2026',
+    monthly: 25000
+  },
+  {
+    name: 'Retirement',
+    value: 1250000,
+    target: 5000000,
+    progress: 25,
+    color: '#5367FF',
+    icon: '👴',
+    priority: 'Medium',
+    priorityColor: '#FF9800',
+    date: 'Mar 10, 2045',
+    monthly: 15000
+  },
+  {
+    name: 'Emergency Fund',
+    value: 475000,
+    target: 500000,
+    progress: 95,
+    color: '#00C087',
+    icon: '🚨',
+    priority: 'High',
+    priorityColor: '#FF5757',
+    date: 'Dec 31, 2023',
+    monthly: 10000
+  },
+  {
+    name: 'Travel Fund',
+    value: 120000,
+    target: 300000,
+    progress: 40,
+    color: '#5367FF',
+    icon: '✈️',
+    priority: 'Low',
+    priorityColor: '#00C087',
+    date: 'Jun 30, 2026',
+    monthly: 8000
+  },
+  {
+    name: 'Education Fund',
+    value: 360000,
+    target: 600000,
+    progress: 60,
+    color: '#FF9800',
+    icon: '🎓',
+    priority: 'Medium',
+    priorityColor: '#FF9800',
+    date: 'Sep 01, 2030',
+    monthly: 12000
+  }
+];
+
 // Chart options
 const chartOptions = {
   responsive: true,
@@ -175,6 +243,10 @@ const chartData = {
 const Dashboard = () => {
   const [isAmountHidden, setIsAmountHidden] = useState(false);
   const [isInvestmentModalOpen, setIsInvestmentModalOpen] = useState(false);
+  const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState(null);
+  const [isGoalDetailsModalOpen, setIsGoalDetailsModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const toggleAmountVisibility = () => {
@@ -187,6 +259,22 @@ const Dashboard = () => {
   
   const handleCloseInvestmentModal = () => {
     setIsInvestmentModalOpen(false);
+  };
+
+  const handleOpenWithdrawalModal = () => {
+    setIsWithdrawalModalOpen(true);
+  };
+  
+  const handleCloseWithdrawalModal = () => {
+    setIsWithdrawalModalOpen(false);
+  };
+
+  const handleOpenGoalModal = () => {
+    setIsGoalModalOpen(true);
+  };
+  
+  const handleCloseGoalModal = () => {
+    setIsGoalModalOpen(false);
   };
 
   const handlePortfolioSummaryClick = (asset) => {
@@ -203,6 +291,31 @@ const Dashboard = () => {
     
     // Navigate to Portfolio page with the selected tab
     navigate(`/portfolio?tab=${tabIndex}`);
+  };
+
+  const handleGoalClick = (goal) => {
+    // Convert the goal data to the format expected by GoalDetailsModal
+    const formattedGoal = {
+      id: goal.name,
+      name: goal.name,
+      icon: goal.icon,
+      goalType: goal.name.toLowerCase().replace(' ', '_'),
+      priority: goal.priority.toLowerCase(),
+      deadline: new Date(goal.date).toISOString(),
+      targetAmount: goal.target,
+      currentAmount: goal.value,
+      progressPercent: goal.progress,
+      description: `${goal.name} savings goal`,
+      monthlyContribution: goal.monthly
+    };
+    
+    setSelectedGoal(formattedGoal);
+    setIsGoalDetailsModalOpen(true);
+  };
+  
+  const handleCloseGoalDetails = () => {
+    setIsGoalDetailsModalOpen(false);
+    setSelectedGoal(null);
   };
 
   return (
@@ -273,7 +386,16 @@ const Dashboard = () => {
             </Card>
           </Grid>
           <Grid item xs={4}>
-            <Card variant="outlined">
+            <Card 
+              variant="outlined"
+              sx={{ 
+                cursor: 'pointer',
+                '&:hover': {
+                  boxShadow: 2
+                }
+              }}
+              onClick={handleOpenWithdrawalModal}
+            >
               <CardContent sx={{ textAlign: 'center', p: 2 }}>
                 <TrendingDownIcon color="secondary" />
                 <Typography variant="body2" sx={{ mt: 1 }}>Add Withdraw</Typography>
@@ -281,7 +403,16 @@ const Dashboard = () => {
             </Card>
           </Grid>
           <Grid item xs={4}>
-            <Card variant="outlined">
+            <Card 
+              variant="outlined"
+              sx={{ 
+                cursor: 'pointer',
+                '&:hover': {
+                  boxShadow: 2
+                }
+              }}
+              onClick={handleOpenGoalModal}
+            >
               <CardContent sx={{ textAlign: 'center', p: 2 }}>
                 <AddIcon color="info" />
                 <Typography variant="body2" sx={{ mt: 1 }}>Add Goal</Typography>
@@ -368,6 +499,9 @@ const Dashboard = () => {
         </Grid>
       </Box>
 
+      {/* Goal Summary */}
+      
+      
       {/* Market Insights */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" sx={{ mb: 2 }}>Market Insights</Typography>
@@ -384,7 +518,17 @@ const Dashboard = () => {
 
       {/* Portfolio Summary */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>Portfolio Summary</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">Portfolio Summary</Typography>
+          <Button 
+            color="primary" 
+            size="small" 
+            startIcon={<AddIcon />}
+            onClick={handleOpenInvestmentModal}
+          >
+            New Investment
+          </Button>
+        </Box>
         <Card>
           <CardContent>
             <Grid container spacing={2}>
@@ -425,11 +569,144 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </Box>
-
+      
+      {/* Financial Goals */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6">Goals Summary</Typography>
+          <Button 
+            color="primary" 
+            size="small" 
+            startIcon={<AddIcon />}
+            onClick={handleOpenGoalModal}
+          >
+            New Goal
+          </Button>
+        </Box>
+        <Card>
+          <CardContent>
+            <Grid container spacing={2}>
+              {financialGoalsData.map((goal) => (
+                <Grid item xs={6} sm={2.4} key={goal.name}>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Box sx={{ position: 'relative', width: 80, height: 80, mx: 'auto' }}>
+                      {/* Background circle */}
+                      <CircularProgress
+                        variant="determinate"
+                        value={100}
+                        sx={{
+                          color: 'rgba(0,0,0,0.1)',
+                          width: '80px !important',
+                          height: '80px !important',
+                        }}
+                      />
+                      {/* Progress circle */}
+                      <CircularProgress
+                        variant="determinate"
+                        value={goal.progress}
+                        sx={{
+                          color: goal.color,
+                          position: 'absolute',
+                          left: 0,
+                          top: 0,
+                          width: '80px !important',
+                          height: '80px !important',
+                        }}
+                      />
+                      {/* Centered icon */}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Avatar 
+                          sx={{ 
+                            bgcolor: `${goal.color}15`, 
+                            color: goal.color,
+                            width: 56, 
+                            height: 56,
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s',
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              boxShadow: 2
+                            }
+                          }}
+                          onClick={() => handleGoalClick(goal)}
+                        >
+                          {goal.icon}
+                        </Avatar>
+                      </Box>
+                    </Box>
+                    <Typography variant="subtitle2" sx={{ mt: 1, fontWeight: 600 }}>{goal.name}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {/* {isAmountHidden ? '••••••' : `₹${Math.round(goal.value/1000).toLocaleString()}K`} */}
+                      {isAmountHidden ? '••••••' : `₹${goal.value.toLocaleString('en-IN')}`}
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mt: 0.5 }}>
+                      <Chip 
+                        label={`${goal.progress}% Complete`}
+                        size="small"
+                        sx={{ 
+                          bgcolor: `${goal.color}15`,
+                          color: goal.color,
+                          fontSize: '0.7rem',
+                          height: 24
+                        }}
+                      />
+                    </Box>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 3, pt: 2, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+              <Typography variant="body2" color="text.secondary">
+                {financialGoalsData.length} active goals
+              </Typography>
+              <Button 
+                variant="outlined" 
+                size="small"
+                color="primary"
+                onClick={() => navigate('/portfolio#my-goals-section')}
+              >
+                View Details
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+  
       {/* Add Investment Modal */}
       <AddInvestmentModal 
         open={isInvestmentModalOpen} 
         onClose={handleCloseInvestmentModal} 
+      />
+
+      {/* Add Withdrawal Modal */}
+      <AddWithdrawalModal 
+        open={isWithdrawalModalOpen} 
+        onClose={handleCloseWithdrawalModal} 
+      />
+
+      {/* Add Goal Modal */}
+      <AddGoalModal 
+        open={isGoalModalOpen} 
+        onClose={handleCloseGoalModal} 
+      />
+
+      {/* Goal Details Modal */}
+      <GoalDetailsModal 
+        open={isGoalDetailsModalOpen} 
+        onClose={handleCloseGoalDetails} 
+        goal={selectedGoal}
       />
     </Box>
   );
